@@ -2,12 +2,13 @@ name: Deploy to sffnoobs environment on push to Triondev
 
 on:
   push:
-    branches: [ Triondev ]
+    branches:
+      - Triondev
     paths:
       - 'force-app/**'
 
 jobs:
-  Deploy-to-sffnoobs-environment:
+  deploy-to-sffnoobs-environment:          # job name in lower‑case for style
     runs-on: ubuntu-latest
     environment: sffnoobs
 
@@ -30,24 +31,37 @@ jobs:
           echo Y | sfdx plugins:install sfdx-git-delta
           sfdx plugins
 
-      - name: 'Create delta packages'
-        run: | 
-             mkdir changed-sources
-             sf sgd source delta --to "HEAD" --from "HEAD~1" --output changed-sources/ --generate-delta --source force-app/
-             echo "[INFO] Diff generated"
-                
-      # - name: Debug Secrets - Check Deployment Username
-      #   run: |
-      #       echo "USERNAME=${{ secrets.DEPLOYMENT_USERNAME }}"
-      #         if [ -z "${{ secrets.DEPLOYMENT_USERNAME }}" ]; then
-      #           echo "❌ DEPLOYMENT_USERNAME is empty or not set in GitHub Secrets."
-      #           exit 1
-      #         else
-      #           echo "✅ DEPLOYMENT_USERNAME is correctly set."
-      #         fi
-
-      - name: 'Deploy to environment with running all local tests'
+      - name: Create delta packages
         run: |
-            echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
-            sf org login jwt --username ${{ secrets.DEPLOYMENT_USERNAME }} --jwt-key-file server.key --client-id ${{ secrets.CONSUMER_KEY }} --instance-url ${{ vars.INSTANCE_URL }} --set-default
-            sf project deploy start --source-dir changed-sources/force-app --test-level RunLocalTests
+          mkdir changed-sources
+          sf sgd source delta \
+            --to "HEAD" \
+            --from "HEAD~1" \
+            --output changed-sources/ \
+            --generate-delta \
+            --source force-app/
+          echo "[INFO] Diff generated"
+
+      - name: Debug Secrets – check DEPLOYMENT_USERNAME
+        run: |
+          if [ -z "${{ secrets.DEPLOYMENT_USERNAME }}" ]; then
+            echo "❌ DEPLOYMENT_USERNAME is empty or not set in GitHub Secrets."
+            exit 1
+          else
+            echo "✅ DEPLOYMENT_USERNAME is correctly set."
+          fi
+
+      - name: Deploy to environment (RunLocalTests)
+        run: |
+          echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
+
+          sf org login jwt \
+            --username "${{ secrets.DEPLOYMENT_USERNAME }}" \
+            --jwt-key-file server.key \
+            --client-id "${{ secrets.CONSUMER_KEY }}" \
+            --instance-url "${{ vars.INSTANCE_URL }}" \
+            --set-default
+
+          sf project deploy start \
+            --source-dir changed-sources/force-app \
+            --test-level RunLocalTests
