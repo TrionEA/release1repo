@@ -9,7 +9,7 @@ on:
 jobs:
   Deploy-to-sffnoobs-environment:
     runs-on: ubuntu-latest
-    environment: newwnvi
+    environment: sffnoobs
 
     steps:
       - name: Setup Node.js
