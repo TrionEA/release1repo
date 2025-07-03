@@ -64,5 +64,6 @@ jobs:
 
           sf project deploy start \
             --source-dir changed-sources/force-app \
-            --test-level NoTestRun
+            --test-level NoTestRun \
+            --dry-run
 
