@@ -36,6 +36,16 @@ jobs:
                 sf sgd source delta --to "HEAD" --from "HEAD~1" --output changed-sources/ --generate-delta --source force-app/
                 echo "[INFO] Diff generated"
                 
+          - name: Debug Secrets - Check Deployment Username
+            run: |
+              echo "USERNAME=${{ secrets.DEPLOYMENT_USERNAME }}"
+              if [ -z "${{ secrets.DEPLOYMENT_USERNAME }}" ]; then
+                echo "❌ DEPLOYMENT_USERNAME is empty or not set in GitHub Secrets."
+                exit 1
+              else
+                echo "✅ DEPLOYMENT_USERNAME is correctly set."
+              fi
+
           - name: 'Deploy to environment with running all local tests'
             run: |
                 echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
